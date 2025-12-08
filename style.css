@@ -1,0 +1,50 @@
+body,
+html {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: #020205; /* Black/very dark blue night sky */
+  font-family: "Arial", sans-serif;
+}
+
+canvas {
+  display: block;
+}
+
+#startOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  z-index: 10;
+  cursor: pointer;
+  transition: opacity 0.5s ease;
+}
+
+.content {
+  text-align: center;
+}
+
+h1 {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  text-shadow: 0 0 10px #ff00ff, 0 0 20px #00ffff;
+}
+
+p {
+  font-size: 1.5rem;
+  opacity: 0.8;
+}
+
+.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
