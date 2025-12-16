@@ -423,25 +423,32 @@ function animate() {
     // 30-40s: Crescendo (ramp up to very frequent)
     // 40-50s: Grand finale
     // 50-60s: Pause (0 spawn)
+
+    const totalDuration = 60000;
+    const warmupDuration = 10000;
+    const mainPhaseDuration = 20000;
+    const crescendoDuration = 10000;
+    const finaleDuration = 10000;
+    const pauseDuration = 10000;
     
     const now = performance.now();
-    const timeInCycle = (now - cycleStartTime) % 60000;
+    const timeInCycle = (now - cycleStartTime) % totalDuration;
     let spawnProbability = 0;
 
-    if (timeInCycle < 10000) {
+    if (timeInCycle < warmupDuration) {
         // Phase 1: Steady, somewhat infrequent
         spawnProbability = 0.01;
-    } else if (timeInCycle < 30000) {
+    } else if (timeInCycle < warmupDuration + mainPhaseDuration) {
         // Phase 2: More frequent, ramping up
-        const progress = (timeInCycle - 10000) / 20000;
+        const progress = (timeInCycle - warmupDuration) / mainPhaseDuration;
         spawnProbability = 0.01 + (progress * 0.09);
-    } else if (timeInCycle < 40000) {
+    } else if (timeInCycle < warmupDuration + mainPhaseDuration + crescendoDuration) {
         // Phase 3: crescendo
-        const progress = (timeInCycle - 30000) / 10000;
+        const progress = (timeInCycle - (warmupDuration + mainPhaseDuration)) / crescendoDuration;
         spawnProbability = 0.02 + (progress * 0.09); 
-    } else if (timeInCycle < 50000) {
+    } else if (timeInCycle < warmupDuration + mainPhaseDuration + crescendoDuration + finaleDuration) {
         // Phase 4: Grand finale
-        const progress = (timeInCycle - 40000) / 10000;
+        const progress = (timeInCycle - (warmupDuration + mainPhaseDuration + crescendoDuration)) / finaleDuration;
         spawnProbability = 0.05 + (progress * 0.09); 
     } else {
         // Phase 5: Silence
@@ -449,7 +456,7 @@ function animate() {
     }
 
     if (Math.random() < spawnProbability) {
-        if (timeInCycle > 25000 && Math.random() < 0.2) {
+        if (timeInCycle / totalDuration > 0.7 && Math.random() < 0.2) {
              fireworks.push(new BigFirework());
         } else {
              fireworks.push(new Firework());
