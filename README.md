@@ -17,7 +17,7 @@ A fun fireworks display app featuring photos of Leopold!
 To run the site locally:
 
 ```bash
-python3 -m http.server
+node server.js
 ```
 
 Then visit `http://localhost:8000`.
