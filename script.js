@@ -12,6 +12,8 @@ let loadedImages = [];
 let fireworks = [];
 let particles = [];
 let isRunning = false;
+let audioCtx;
+let noiseBuffer;
 
 // Configuration
 const GRAVITY = 0.04; // Reduced gravity to make them float longer
@@ -32,11 +34,60 @@ startOverlay.addEventListener('click', () => {
     if (!isRunning) {
         startOverlay.classList.add('hidden');
         isRunning = true;
+        
+        // Initialize Audio Context on user gesture
+        initAudio();
+        
         loadPhotos().then(() => {
             animate();
         });
     }
 });
+
+function initAudio() {
+    try {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        // Create 2 seconds of white noise buffer
+        const bufferSize = audioCtx.sampleRate * 2; 
+        noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+        const data = noiseBuffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+            data[i] = Math.random() * 2 - 1;
+        }
+    } catch (e) {
+        console.warn('Web Audio API not supported', e);
+    }
+}
+
+function playExplosionSound() {
+    if (!audioCtx) return;
+    if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+    }
+
+    const source = audioCtx.createBufferSource();
+    source.buffer = noiseBuffer;
+
+    // Filter to make it sound like a "thud" (low pass)
+    const filter = audioCtx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(800, audioCtx.currentTime);
+    filter.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.5);
+
+    const gainNode = audioCtx.createGain();
+    
+    // Envelope: sharp attack, decay
+    gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime); 
+    gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.8);
+
+    source.connect(filter);
+    filter.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+    
+    source.start();
+    source.stop(audioCtx.currentTime + 1);
+}
 
 // Fetch and load photos
 async function loadPhotos() {
@@ -98,6 +149,7 @@ class Firework {
     }
 
     explode() {
+        playExplosionSound();
         for (let i = 0; i < PARTICLES_PER_EXPLOSION; i++) {
             particles.push(new Particle(this.x, this.y, this.hue));
         }
