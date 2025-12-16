@@ -362,19 +362,24 @@ class Particle {
         this.sy += GRAVITY;
         this.alpha -= this.decay;
         
+        // Prevent negative alpha causing crash in arc() radius
+        if (this.alpha <= 0) return false;
+        
         // Update rotation
         this.angle += this.rotationSpeed;
 
         if (this.image) {
             // Constrain aspect ratio
             const aspect = this.image.width / this.image.height;
-            let drawWidth = PARTICLE_SIZE;
-            let drawHeight = PARTICLE_SIZE;
+            // Shrink as it decays
+            const currentSize = PARTICLE_SIZE * this.alpha;
+            let drawWidth = currentSize;
+            let drawHeight = currentSize;
             
             if (aspect > 1) {
-                drawHeight = PARTICLE_SIZE / aspect;
+                drawHeight = currentSize / aspect;
             } else {
-                drawWidth = PARTICLE_SIZE * aspect;
+                drawWidth = currentSize * aspect;
             }
 
             ctx.save();
@@ -414,33 +419,33 @@ function animate() {
     // Launch random fireworks
     // Cycle: 20 seconds total
     // 0-10s: Warmup (infrequent)
-    // 10-25: Main phase 
-    // 25-30s: Crescendo (ramp up to very frequent)
-    // 30-35s: Grand finale
-    // 35-40s: Pause (0 spawn)
+    // 10-30: Main phase 
+    // 30-40s: Crescendo (ramp up to very frequent)
+    // 40-50s: Grand finale
+    // 50-60s: Pause (0 spawn)
     
     const now = performance.now();
-    const timeInCycle = (now - cycleStartTime) % 45000;
+    const timeInCycle = (now - cycleStartTime) % 60000;
     let spawnProbability = 0;
 
     if (timeInCycle < 10000) {
         // Phase 1: Steady, somewhat infrequent
         spawnProbability = 0.01;
-    } else if (timeInCycle < 25000) {
-        // Phase 2: More frequent, ramping up
-        const progress = (timeInCycle - 10000) / 15000;
-        spawnProbability = 0.01 + (progress * 0.09);
     } else if (timeInCycle < 30000) {
-        // Phase 3: crescendo
-        const progress = (timeInCycle - 25000) / 5000;
-        spawnProbability = 0.02 + (progress * 0.09); 
+        // Phase 2: More frequent, ramping up
+        const progress = (timeInCycle - 10000) / 20000;
+        spawnProbability = 0.01 + (progress * 0.09);
     } else if (timeInCycle < 40000) {
-        // Phase 4: Grand finale
+        // Phase 3: crescendo
         const progress = (timeInCycle - 30000) / 10000;
+        spawnProbability = 0.02 + (progress * 0.09); 
+    } else if (timeInCycle < 50000) {
+        // Phase 4: Grand finale
+        const progress = (timeInCycle - 40000) / 10000;
         spawnProbability = 0.05 + (progress * 0.09); 
     } else {
         // Phase 5: Silence
-        spawnProbability = 0;
+        spawnProbability = 0.005;
     }
 
     if (Math.random() < spawnProbability) {
