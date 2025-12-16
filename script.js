@@ -97,27 +97,53 @@ function playBigExplosionSound() {
         audioCtx.resume();
     }
 
+    const t = audioCtx.currentTime;
+
+    // 1. Main Big BOOM
     const source = audioCtx.createBufferSource();
     source.buffer = noiseBuffer;
 
     // Filter for deep BOOM (low pass starting lower)
     const filter = audioCtx.createBiquadFilter();
     filter.type = 'lowpass';
-    filter.frequency.setValueAtTime(400, audioCtx.currentTime); // Start lower (400Hz vs 800Hz)
-    filter.frequency.exponentialRampToValueAtTime(10, audioCtx.currentTime + 1.5); // Drop to rumble
+    filter.frequency.setValueAtTime(400, t); // Start lower (400Hz vs 800Hz)
+    filter.frequency.exponentialRampToValueAtTime(10, t + 1.5); // Drop to rumble
 
     const gainNode = audioCtx.createGain();
     
     // Envelope: Louder attack, longer decay
-    gainNode.gain.setValueAtTime(0.8, audioCtx.currentTime); 
-    gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 1.5);
+    gainNode.gain.setValueAtTime(0.8, t); 
+    gainNode.gain.exponentialRampToValueAtTime(0.001, t + 1.5);
 
     source.connect(filter);
     filter.connect(gainNode);
     gainNode.connect(audioCtx.destination);
     
-    source.start();
-    source.stop(audioCtx.currentTime + 2);
+    source.start(t);
+    source.stop(t + 2);
+
+    // 2. Washed out Whoosh (Aftermath)
+    const wSource = audioCtx.createBufferSource();
+    wSource.buffer = noiseBuffer;
+    
+    // Bandpass for "windy" feel, sweeping down
+    const wFilter = audioCtx.createBiquadFilter();
+    wFilter.type = 'bandpass';
+    wFilter.Q.value = 1; // Wider band for "washed out" feel
+    wFilter.frequency.setValueAtTime(1000, t);
+    wFilter.frequency.exponentialRampToValueAtTime(100, t + 2.5); // Sweep down
+
+    const wGain = audioCtx.createGain();
+    wGain.gain.setValueAtTime(0, t);
+    wGain.gain.linearRampToValueAtTime(0.2, t + 0.2); // Fade in
+    wGain.gain.exponentialRampToValueAtTime(0.001, t + 2.5); // Long fade out
+
+    wSource.connect(wFilter);
+    wFilter.connect(wGain);
+    wGain.connect(audioCtx.destination);
+    
+    wSource.start(t);
+    wSource.stop(t + 3);
 }
 
 // Fetch and load photos
@@ -388,29 +414,37 @@ function animate() {
     // Launch random fireworks
     // Cycle: 20 seconds total
     // 0-10s: Warmup (infrequent)
-    // 10-15s: Crescendo (ramp up to very frequent)
-    // 15-20s: Pause (0 spawn)
+    // 10-25: Main phase 
+    // 25-30s: Crescendo (ramp up to very frequent)
+    // 30-35s: Grand finale
+    // 35-40s: Pause (0 spawn)
     
     const now = performance.now();
-    const timeInCycle = (now - cycleStartTime) % 20000;
+    const timeInCycle = (now - cycleStartTime) % 45000;
     let spawnProbability = 0;
 
     if (timeInCycle < 10000) {
         // Phase 1: Steady, somewhat infrequent
         spawnProbability = 0.01;
-    } else if (timeInCycle < 15000) {
-        // Phase 2: Ramping up
-        // Progress 0 to 1 over 10 seconds
-        const progress = (timeInCycle - 10000) / 5000;
-        // Ramp from 0.01 to 0.015
-        spawnProbability = 0.01 + (progress * 0.09); 
+    } else if (timeInCycle < 25000) {
+        // Phase 2: More frequent, ramping up
+        const progress = (timeInCycle - 10000) / 15000;
+        spawnProbability = 0.01 + (progress * 0.09);
+    } else if (timeInCycle < 30000) {
+        // Phase 3: crescendo
+        const progress = (timeInCycle - 25000) / 5000;
+        spawnProbability = 0.02 + (progress * 0.09); 
+    } else if (timeInCycle < 40000) {
+        // Phase 4: Grand finale
+        const progress = (timeInCycle - 30000) / 10000;
+        spawnProbability = 0.05 + (progress * 0.09); 
     } else {
-        // Phase 3: Silence
+        // Phase 5: Silence
         spawnProbability = 0;
     }
 
     if (Math.random() < spawnProbability) {
-        if (timeInCycle > 10000 && Math.random() < 0.3) {
+        if (timeInCycle > 25000 && Math.random() < 0.2) {
              fireworks.push(new BigFirework());
         } else {
              fireworks.push(new Firework());
