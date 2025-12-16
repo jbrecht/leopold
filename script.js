@@ -14,6 +14,7 @@ let particles = [];
 let isRunning = false;
 let audioCtx;
 let noiseBuffer;
+let cycleStartTime = 0;
 
 // Configuration
 const GRAVITY = 0.04; // Reduced gravity to make them float longer
@@ -34,6 +35,7 @@ startOverlay.addEventListener('click', () => {
     if (!isRunning) {
         startOverlay.classList.add('hidden');
         isRunning = true;
+        cycleStartTime = performance.now();
         
         // Initialize Audio Context on user gesture
         initAudio();
@@ -316,6 +318,10 @@ class Particle {
         this.decay = Math.random() * 0.015 + 0.005;
         this.hue = hue;
         
+        // Rotation
+        this.angle = 0;
+        this.rotationSpeed = Math.random() * 0.2 - 0.1; // Random spin speed
+
         // Assign a random photo if available
         this.image = loadedImages.length > 0 
             ? loadedImages[Math.floor(Math.random() * loadedImages.length)] 
@@ -329,6 +335,9 @@ class Particle {
         this.sy *= FRICTION;
         this.sy += GRAVITY;
         this.alpha -= this.decay;
+        
+        // Update rotation
+        this.angle += this.rotationSpeed;
 
         if (this.image) {
             // Constrain aspect ratio
@@ -345,7 +354,7 @@ class Particle {
             ctx.save();
             ctx.globalAlpha = this.alpha;
             ctx.translate(this.x, this.y);
-            // Spin effect? Maybe too much. Let's keep them upright for visibility.
+            ctx.rotate(this.angle); // Apply rotation
             ctx.drawImage(this.image, -drawWidth / 2, -drawHeight / 2, drawWidth, drawHeight);
             
             // Add a glow/tint based on firework color
@@ -377,8 +386,31 @@ function animate() {
     // For now, simple clear is fine.
 
     // Launch random fireworks
-    if (Math.random() < 0.03) {
-        if (Math.random() < 0.2) {
+    // Cycle: 20 seconds total
+    // 0-10s: Warmup (infrequent)
+    // 10-15s: Crescendo (ramp up to very frequent)
+    // 15-20s: Pause (0 spawn)
+    
+    const now = performance.now();
+    const timeInCycle = (now - cycleStartTime) % 20000;
+    let spawnProbability = 0;
+
+    if (timeInCycle < 10000) {
+        // Phase 1: Steady, somewhat infrequent
+        spawnProbability = 0.01;
+    } else if (timeInCycle < 15000) {
+        // Phase 2: Ramping up
+        // Progress 0 to 1 over 10 seconds
+        const progress = (timeInCycle - 10000) / 5000;
+        // Ramp from 0.01 to 0.015
+        spawnProbability = 0.01 + (progress * 0.09); 
+    } else {
+        // Phase 3: Silence
+        spawnProbability = 0;
+    }
+
+    if (Math.random() < spawnProbability) {
+        if (timeInCycle > 10000 && Math.random() < 0.3) {
              fireworks.push(new BigFirework());
         } else {
              fireworks.push(new Firework());
