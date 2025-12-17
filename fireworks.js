@@ -1,6 +1,8 @@
 const canvas = document.getElementById('fireworksCanvas');
 const ctx = canvas.getContext('2d');
 const startOverlay = document.getElementById('startOverlay');
+const introText = document.getElementById('introText');
+const countdownDisplay = document.getElementById('countdown');
 
 let width = window.innerWidth;
 let height = window.innerHeight;
@@ -35,16 +37,35 @@ window.addEventListener('resize', () => {
 // Start handler
 startOverlay.addEventListener('click', () => {
     if (!isRunning) {
-        startOverlay.classList.add('hidden');
         isRunning = true;
-        cycleStartTime = performance.now();
         
         // Initialize Audio Context on user gesture
         initAudio();
         
-        loadPhotos().then(() => {
-            animate();
-        });
+        // Start loading photos in background
+        const photosPromise = loadPhotos();
+
+        // UI transitions
+        introText.classList.add('hidden');
+        countdownDisplay.classList.remove('hidden');
+        
+        let count = 10;
+        countdownDisplay.textContent = count;
+        
+        const timer = setInterval(() => {
+            count--;
+            if (count > 0) {
+                countdownDisplay.textContent = count;
+            } else {
+                clearInterval(timer);
+                startOverlay.classList.add('hidden');
+                cycleStartTime = performance.now();
+                
+                photosPromise.then(() => {
+                    animate();
+                });
+            }
+        }, 1000);
     }
 });
 

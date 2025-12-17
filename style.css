@@ -48,3 +48,10 @@ p {
   opacity: 0;
   pointer-events: none;
 }
+
+#countdown {
+  font-size: 8rem;
+  font-weight: bold;
+  color: #fff;
+  text-shadow: 0 0 20px #ff00ff, 0 0 40px #00ffff;
+}
