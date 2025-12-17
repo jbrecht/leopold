@@ -482,12 +482,13 @@ function animate() {
     // 40-50s: Grand finale
     // 50-60s: Pause (0 spawn)
 
-    const totalDuration = 60000;
     const warmupDuration = 10000;
     const mainPhaseDuration = 20000;
     const crescendoDuration = 10000;
-    const finaleDuration = 10000;
+    const finaleDuration = 20000;
     const pauseDuration = 10000;
+
+    const totalDuration = warmupDuration + mainPhaseDuration + crescendoDuration + finaleDuration + pauseDuration;
     
     const now = performance.now();
     const timeInCycle = (now - cycleStartTime) % totalDuration;
@@ -514,7 +515,7 @@ function animate() {
     }
 
     if (Math.random() < spawnProbability) {
-        if (timeInCycle / totalDuration > 0.7 && Math.random() < 0.2) {
+        if (timeInCycle / totalDuration > 0.6 && Math.random() < 0.2) {
              fireworks.push(new BigFirework());
         } else {
              fireworks.push(new Firework());
