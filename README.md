@@ -20,4 +20,4 @@ To run the site locally:
 node server.js
 ```
 
-Then visit `http://localhost:8000`.
+Then visit `http://localhost:8001`.
