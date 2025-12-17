@@ -184,6 +184,11 @@ class Firework {
         
         // Target height to explode at
         this.targetY = Math.random() * (height * 0.4) + (height * 0.1); 
+        
+        // Assign a random photo for this firework's particles
+        this.image = loadedImages.length > 0 
+            ? loadedImages[Math.floor(Math.random() * loadedImages.length)] 
+            : null; 
     }
 
     update() {
@@ -192,10 +197,26 @@ class Firework {
         this.sy += GRAVITY;
 
         // Draw rocket trail
-        ctx.fillStyle = `hsl(${this.hue}, 100%, 50%)`;
+        ctx.fillStyle = 'orange';
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
         ctx.fill();
+
+        // Draw small image at tip
+        if (this.image) {
+            const tipSize = 20;
+            const aspect = this.image.width / this.image.height;
+            let w = tipSize;
+            let h = tipSize;
+            
+            if (aspect > 1) {
+                h = w / aspect;
+            } else {
+                w = h * aspect;
+            }
+            
+            ctx.drawImage(this.image, this.x - w / 2, this.y - h / 2, w, h);
+        }
 
         // Check if should explode
         if (this.sy >= 0 || this.y <= this.targetY) {
@@ -208,7 +229,7 @@ class Firework {
     explode() {
         playExplosionSound();
         for (let i = 0; i < PARTICLES_PER_EXPLOSION; i++) {
-            particles.push(new Particle(this.x, this.y, this.hue));
+            particles.push(new Particle(this.x, this.y, this.hue, this.image));
         }
     }
 }
@@ -333,7 +354,7 @@ class GlitterParticle {
 }
 
 class Particle {
-    constructor(x, y, hue) {
+    constructor(x, y, hue, image) {
         this.x = x;
         this.y = y;
         const angle = Math.random() * Math.PI * 2;
@@ -348,10 +369,8 @@ class Particle {
         this.angle = 0;
         this.rotationSpeed = Math.random() * 0.2 - 0.1; // Random spin speed
 
-        // Assign a random photo if available
-        this.image = loadedImages.length > 0 
-            ? loadedImages[Math.floor(Math.random() * loadedImages.length)] 
-            : null;
+        // Use the image assigned to the parent firework
+        this.image = image;
     }
 
     update() {
