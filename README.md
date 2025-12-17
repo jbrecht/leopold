@@ -1,6 +1,6 @@
 # Leopold Fireworks 🐶🎆
 
-A fun fireworks display app featuring photos of Leopold!
+A fireworks show featuring photos of Leopold!
 
 ## Live Site
 
