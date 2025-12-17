@@ -15,6 +15,8 @@ let isRunning = false;
 let audioCtx;
 let noiseBuffer;
 let cycleStartTime = 0;
+let skyFlashAlpha = 0;
+let skyFlashHue = 0;
 
 // Configuration
 const GRAVITY = 0.04; // Reduced gravity to make them float longer
@@ -228,6 +230,8 @@ class Firework {
 
     explode() {
         playExplosionSound();
+        skyFlashHue = this.hue;
+        skyFlashAlpha = 0.2;
         for (let i = 0; i < PARTICLES_PER_EXPLOSION; i++) {
             particles.push(new Particle(this.x, this.y, this.hue, this.image));
         }
@@ -305,6 +309,8 @@ class BigFirework {
 
     explode() {
         playBigExplosionSound();
+        skyFlashHue = this.hue;
+        skyFlashAlpha = 0.2; // Brighter flash for big fireworks
         // BIG Explosion!
         const particleCount = PARTICLES_PER_EXPLOSION * 10;
         for (let i = 0; i < particleCount; i++) {
@@ -431,6 +437,18 @@ function animate() {
     // Semi-transparent clear for trails
     ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
     ctx.fillRect(0, 0, width, height);
+
+    // Sky Flash Effect
+    if (skyFlashAlpha > 0) {
+        ctx.fillStyle = `hsla(${skyFlashHue}, 100%, 50%, ${skyFlashAlpha})`;
+        // Use 'lighter' composite operation for a better light flash effect
+        ctx.globalCompositeOperation = 'lighter';
+        ctx.fillRect(0, 0, width, height);
+        ctx.globalCompositeOperation = 'source-over'; // Reset
+        
+        skyFlashAlpha -= 0.2; // Fades out in ~50 frames (~0.8s) if starts at 1, or fast if starts low
+        if (skyFlashAlpha < 0) skyFlashAlpha = 0;
+    }
 
     // Randomly clean up excessive trails if performance drops (optional optimization)
     // For now, simple clear is fine.
